@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+  <meta charset="UTF-8">
+  <title>WikiScout</title>
+  <link rel="stylesheet" href="./style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+</head>
+<body>
+<!-- partial:index.partial.html -->
+<menu class="menu">
+    
+    <button class="menu__item" style="--bgColorItem: #ff8c00;" onclick="hideIframe()">
+      <img class="icon" src="https://cirruscdn.com/upload/yb7xf4WI0nYkqNRUP2tQLamcO/" alt="icon" style="height: 2.3em;">
+    </button>
+
+    <button class="menu__item" style="--bgColorItem: #f54888;" onclick="showLeaderboard()">
+      <img class="icon" src="https://cirruscdn.com/upload/5Y0ayTBMGdNnVJAI14KoE2rvh/" alt="icon" style="height: 2.3em;">
+    </button>
+
+    <button class="menu__item" style="--bgColorItem: #4343f5;" onclick="showDataView()">
+      <img class="icon" src="https://cirruscdn.com/upload/t7v4jRxEbwy2ZigsL6aUXFqJz/" alt="icon" style="height: 2.3em;">
+    </button>
+
+    <button class="menu__item active" style="--bgColorItem: #7ee787;" onclick="hideIframe()"> 
+      <img class="icon" src="https://cirruscdn.com/upload/bVxT4ZYfXI2UN1t69ryO3gcuE/" alt="icon" style="height: 2.3em;">
+    </button>
+
+    <div class="menu__border"></div>
+
+  </menu>
+
+  <div class="svg-container">
+    <svg viewBox="0 0 202.9 45.5" >
+      <clipPath id="menu" clipPathUnits="objectBoundingBox" transform="scale(0.0049285362247413 0.021978021978022)">
+        <path  d="M6.7,45.5c5.7,0.1,14.1-0.4,23.3-4c5.7-2.3,9.9-5,18.1-10.5c10.7-7.1,11.8-9.2,20.6-14.3c5-2.9,9.2-5.2,15.2-7
+          c7.1-2.1,13.3-2.3,17.6-2.1c4.2-0.2,10.5,0.1,17.6,2.1c6.1,1.8,10.2,4.1,15.2,7c8.8,5,9.9,7.1,20.6,14.3c8.3,5.5,12.4,8.2,18.1,10.5
+          c9.2,3.6,17.6,4.2,23.3,4H6.7z"/>
+      </clipPath>
+    </svg>
+  </div>
+
+  <div id="otp-info-container">
+    <h4 class="text-center mb-4">To enter an OTP and login to this account, go to the following link and enter the code below:</h4>
+    <pre id="otp-link" class="code-block"></pre>
+  </div>
+
+  <div id="form-container" class="form-container" autocomplete="off" novalidate></div>
+
+  <div id="otp-container">
+    <h4 class="text-center mb-4">Your OTP Code</h4>
+    <div class="d-flex mb-3">
+        <input type="tel" maxlength="1" pattern="[0-9]" class="form-control" readonly>
+        <input type="tel" maxlength="1" pattern="[0-9]" class="form-control" readonly>
+        <input type="tel" maxlength="1" pattern="[0-9]" class="form-control" readonly>
+        <input type="tel" maxlength="1" pattern="[0-9]" class="form-control" readonly>
+    </div>
+    <div class="d-flex mb-3">
+        <input type="tel" maxlength="1" pattern="[0-9]" class="form-control" readonly>
+        <input type="tel" maxlength="1" pattern="[0-9]" class="form-control" readonly>
+        <input type="tel" maxlength="1" pattern="[0-9]" class="form-control" readonly>
+        <input type="tel" maxlength="1" pattern="[0-9]" class="form-control" readonly>
+    </div>
+    <div class="button-container">
+        <button id="delete-btn" class="btn btn-danger">Delete</button>
+        <button id="regenerate-btn" class="btn btn-primary">Regenerate</button>
+    </div>
+  </div>
+
+  <div id="leaderboard-container" class="leaderboard-container"></div>
+  <div id="stats-popup" class="stats-popup" onclick="hideStatsPopup(event)">
+      <div class="stats-content">
+          <div class="stats-fixed-header">
+              <div class="stats-header"></div>
+              <div class="stats-row">
+                  <div class="stat-box stat-wins">0</div>
+                  <div class="stat-box stat-ties">0</div>
+                  <div class="stat-box stat-losses">0</div>
+              </div>
+              <div class="matches-played">Matches Played: 0</div>
+          </div>
+          <div class="match-results-scroll"></div>
+      </div>
+  </div>
+
+  <div id="data-container" class="data-container">
+    <div class="form-group">
+      <label>Select Team</label>
+      <select id="data-team-select" onchange="fetchTeamData(this.value, document.getElementById('event-id-code')?.value || localStorage.getItem('event'))">
+        <option value="">Select Team</option>
+      </select>
+    </div>
+    <div id="data-content"></div>
+  </div>
+
+  <div id="match-results-container" class="match-results-container"></div>
+
+  <script>
+    function hideIframe() {
+      document.getElementById('iframe-container').style.display = 'none';
+    }
+
+    // Auto-fill the host domain in the OTP info container
+    const currentUrl = window.location.href;
+    const hostDomain = currentUrl.replace('dashboard/', 'code/');
+    document.getElementById('otp-link').textContent = hostDomain;
+
+    // Fetch event info from me API endpoint
+    document.addEventListener('DOMContentLoaded', function() {
+      fetch('/dashboard/me/')
+        .then(response => response.json())
+        .then(data => {
+          if (data.found) {
+            localStorage.setItem('event', data.event.code);
+            localStorage.setItem('eventName', data.event.name);
+          }
+          // Generate the form with event info
+          generateForm();
+        })
+        .catch(error => console.error('Error fetching event info:', error));
+    });
+  </script>
+
+  <script src="./script.js"></script>
+</body>
+</html>

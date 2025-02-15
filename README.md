@@ -1,1 +1,1 @@
-# WikiScout-Lite
+# WikiScout
